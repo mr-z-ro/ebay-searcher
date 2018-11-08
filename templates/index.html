@@ -1,0 +1,126 @@
+<html>
+<head>
+    <style>
+        pre#resp {
+            font-size: 8px;
+        }
+        .result {
+            border-top: 1px solid #ccc;
+            padding: 24px;
+        }
+        .result-pic {
+            max-width: 100px;
+            max-height: 100px;
+        }
+    </style>
+    <script>
+        function readFile() {
+  
+            if (this.files && this.files[0]) {
+              
+              // Show loading message
+              document.getElementById("results").innerHTML = "Loading Results...";
+              document.getElementById("resp").innerHTML = "";
+
+              var FR= new FileReader();
+              
+              FR.addEventListener("load", function(e) {
+
+                // Show the image
+                document.getElementById("img").src = e.target.result;
+
+                var xhr = new XMLHttpRequest();
+                var url = "/search";
+                xhr.open("POST", url, true);
+                xhr.setRequestHeader("Content-Type", "application/json");
+                xhr.onreadystatechange = function () {
+                    if (xhr.readyState === 4 && xhr.status === 200) {
+                        var resp = xhr.responseText;
+                        document.getElementById("resp").innerHTML = "Raw Results:\n\n" + resp;
+
+                        var json = JSON.parse(resp);
+                        /* DO THINGS HERE WITH RESPONSE */
+
+                        var resultsHolder = document.getElementById("results");
+
+                        var item = json.itemSummaries[0];
+                        
+                        // Clear loading message
+                        document.getElementById("results").innerHTML = "";
+
+                        json.itemSummaries.forEach(function(obj) { 
+                            var item = document.createElement("div");
+                            item.className = "result";
+
+                            if (obj.image && obj.image.imageUrl) {
+                                var picLink = document.createElement("a");
+                                picLink.href = obj.image.imageUrl;
+                                picLink.target = "_blank";
+                                var pic = document.createElement("img");
+                                pic.className = "result-pic";
+                                if (obj.thumbnailImages && obj.thumbnailImages[0]) {
+                                    pic.src = obj.thumbnailImages[0].imageUrl;
+                                } else {
+                                    pic.src = obj.image.imageUrl;
+                                }
+                                picLink.appendChild(pic);
+                                item.appendChild(picLink);
+                            }
+                            
+                            var itemLink = document.createElement("a");
+                            itemLink.href = obj.itemWebUrl;
+                            itemLink.target = "_blank";
+                            var titleNode = document.createTextNode(obj.title)
+                            itemLink.appendChild(titleNode);
+                            item.appendChild(itemLink);
+
+                            var itemHistory = document.createElement("a");
+                            itemHistory.href = "/insights/" + obj.itemId.split("|")[1];
+                            itemHistory.target = "_blank";
+                            var historyNode = document.createTextNode(" (history)")
+                            itemHistory.appendChild(historyNode);
+                            item.appendChild(itemHistory);
+
+                            var itemFeatures = document.createElement("ul");
+                            var itemCondition = document.createElement("li");
+                            itemCondition.innerHTML = "Condition: " + obj.condition;
+                            itemFeatures.appendChild(itemCondition);
+                            var itemPrice = document.createElement("li");
+                            itemPrice.innerHTML = "Price: " + obj.price.currency + obj.price.value;
+                            itemFeatures.appendChild(itemPrice);
+                            var itemLocation = document.createElement("li");
+                            var itemLocationLink = document.createElement("a");
+                            if (obj.itemLocation.postalCode) {
+                                itemLocationLink.href = "https://www.google.com/maps/place/" + obj.itemLocation.postalCode;
+                                itemLocationLink.target = "_blank";
+                            }
+                            itemLocationLink.innerHTML = "Location: " + obj.itemLocation.country + " " + obj.itemLocation.postalCode;
+                            itemLocation.appendChild(itemLocationLink);
+                            itemFeatures.appendChild(itemLocation);
+                            item.appendChild(itemFeatures);
+
+                            resultsHolder.appendChild(item);
+                        });
+                    }
+                };
+                var data = JSON.stringify({image: e.target.result.split(",")[1]});
+                xhr.send(data);
+              }); 
+              
+              FR.readAsDataURL( this.files[0] );
+            }
+          }
+    </script>
+</head>
+<body>
+    <h1>eBay Searcher</h1>
+    <hr />
+    Select a Picture: <input id="inp" type='file'>
+    <img id="img" width="150">
+    <hr />
+    <div id="results"></div>
+    <hr />
+    <pre id="resp"></pre>
+    <script>document.getElementById("inp").addEventListener("change", readFile);</script>
+</body>
+</html>

@@ -46,4 +46,4 @@ fi
 export EBAY_APP_NAME=$EBAY_APP_NAME
 export EBAY_AUTH_TOKEN=$EBAY_AUTH_TOKEN
 
-FLASK_APP=app.py flask run
+FLASK_APP=app.py flask run --host=0.0.0.0

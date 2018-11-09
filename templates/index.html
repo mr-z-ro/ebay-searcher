@@ -42,11 +42,24 @@
                         /* DO THINGS HERE WITH RESPONSE */
 
                         var resultsHolder = document.getElementById("results");
-
-                        var item = json.itemSummaries[0];
                         
                         // Clear loading message
                         document.getElementById("results").innerHTML = "";
+
+                        if (json.errors) {
+                            json.errors.forEach(function(err) {
+                                if (err && err.errorId == 1001) {
+                                    var debugHolder = document.getElementById("debug");
+                                    var authLink = document.createElement("a");
+                                    authLink.href = "https://developer.ebay.com/my/auth/?env=production&index=0";
+                                    authLink.target = "_blank";
+                                    var authText = document.createTextNode("Auth Refresh");
+                                    authLink.appendChild(authText);
+                                    debugHolder.prepend(authLink);
+                                    return;
+                                }
+                            });
+                        }
 
                         json.itemSummaries.forEach(function(obj) { 
                             var item = document.createElement("div");
@@ -75,9 +88,11 @@
                             item.appendChild(itemLink);
 
                             var itemHistory = document.createElement("a");
-                            itemHistory.href = "/insights/" + obj.itemId.split("|")[1];
+                            //itemHistory.href = "/insights/" + obj.itemId.split("|")[1];
+                            var url_encoded_name = obj.title.replace(" ","+");
+                            itemHistory.href = "https://www.ebay.com/sch/i.html?_nkw=" + url_encoded_name  + "&LH_Sold=1&LH_Complete=1";
                             itemHistory.target = "_blank";
-                            var historyNode = document.createTextNode(" (history)")
+                            var historyNode = document.createTextNode(" >>history<< ")
                             itemHistory.appendChild(historyNode);
                             item.appendChild(itemHistory);
 
@@ -120,7 +135,9 @@
     <hr />
     <div id="results"></div>
     <hr />
-    <pre id="resp"></pre>
+    <div id="debug">
+        <pre id="resp"></pre>
+    </div>
     <script>document.getElementById("inp").addEventListener("change", readFile);</script>
 </body>
 </html>
